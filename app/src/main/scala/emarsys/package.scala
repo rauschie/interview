@@ -12,28 +12,25 @@ package object emarsys {
       edges: Set[(A, A)]
   ): Either[CyclicGraphError, List[A]] = {
     @tailrec
-    def loop(
-        stack: List[A],
-        edges: Set[(A, A)],
-        acc: List[A]
-    ): List[A] = stack match {
-      case Nil =>
-        if (edges.isEmpty) acc
-        else
-          throw new CyclicGraphError(
-            s"At least one of the nodes has a circular dependency"
-          )
-      case head :: tail =>
-        val (deps, remainder) = edges.partition(_._1 == head)
-        val insert = deps
-          .map(_._2)
-          .filterNot(remainder.map(_._2).contains(_))
-          .toList
-        loop(tail ::: insert, remainder, head :: acc)
-    }
+    def loop(stack: List[A], edges: Set[(A, A)], acc: List[A]): List[A] =
+      stack match {
+        case Nil =>
+          if (edges.isEmpty) acc
+          else
+            throw new CyclicGraphError(
+              s"At least one of the nodes has a circular dependency"
+            )
+        case head :: tail =>
+          val (deps, remainder) = edges.partition(_._1 == head)
+          val insert = deps
+            .map(_._2)
+            .filterNot(remainder.map(_._2).contains(_))
+            .toList
+          loop(tail ::: insert, remainder, head :: acc)
+      }
+
     def edgesTo(n: A, e: Set[(A, A)]) = e.filter(_._2 == n)
-    def dependenciesOf(n: A, e: Set[(A, A)]) =
-      edgesTo(n, e).map(_._1).toList
+    def dependenciesOf(n: A, e: Set[(A, A)]) = edgesTo(n, e).map(_._1).toList
 
     try {
       if (nodes == Nil) return Right(Nil)
@@ -46,7 +43,6 @@ package object emarsys {
           case h :: t => h :: t
         }
       Right(loop(initial, edges, Nil).reverse.distinct)
-
     } catch {
       case e: CyclicGraphError => Left(e)
     }
